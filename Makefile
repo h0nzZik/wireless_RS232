@@ -1,7 +1,6 @@
-name="coordinator"
 coord:
 	mkdir -p out/coord
-	cc5x ${name}.c -Oout/coord
+	cc5x coordinator.c -Oout/coord
 
 node:
 	mkdir -p out/node

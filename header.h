@@ -1,7 +1,35 @@
-#ifndef HEADE_RH
+#ifndef HEADER_H
 #define HEADER_H
 
+#ifdef __FOR_DEVICE
+#include <template-basic.h>
 
+struct istat {
+	/* coord == 0 -> node,
+	 * coord == 1 -> coordinator
+	 */
+	uns8 coord:1;
+	/* state number */
+	uns8 state;
+	/* Change state?
+	 * cstat == 0 -> nothing,
+	 * cstat != 0 -> state = cstat;
+	 */
+	uns8 chstat;
+};
+extern struct istat dev;
+
+/* some common functions*/
+void sync_blink(void);
+uns8 receive_packet(void);
+uns8 check_spi();
+void eeprom_save(void);
+uns8 check_spi();
+
+
+
+
+#endif
 /**
  * RF Communication
  *
@@ -14,6 +42,16 @@
 
 #define RF_BOND	0x10
 #define RF_DATA	0x30
+#define RF_ACK	0x40
+
+/**
+ * Wireless comunication
+ *
+ * * RF_ACK
+ *
+ *
+ */
+
 
 /**
  * Coordinator is designed as a state machine.
@@ -38,7 +76,7 @@
 #define STATE_BOND	0x20
 #define STATE_WORK	0x30
 #define STATE_SLEEP	0x40	// FIXME: not implemented yet
-
+#define STATE_ERROR	0x50
 /*
  * SPI communication protocol
  * * * * * * * * * * * * * * *
@@ -58,20 +96,34 @@
  * @param SPI[1]	Value to change state to
  *
  * * SPI_CMD_SEND	Sends data through RF. Only on STATE_WORK
- * @flag  RF_NETWORK	Send data to IQMesh network if 1, use P2P mode otherwise	
+ * @flag  RF_NETWORK	Send data to IQMesh network if 1, use P2P mode otherwise
  * @param SPI[1]	Destination address
  * @param SPI[2:$]	Data to send
+ *
+ * * SPI_CMD_MORE	Send next data fragment?
+ * @flag F_YES		yes, send next fragment
+ * @flag F_NO		no, don't send next fragment
+ * Comment:		Note that F_YES and F_NO have to be mutually exclusive
+ *
+ *
+ * * SPI_CMD_WRU	Who are you?
+ * Comment:		Module will send SPI_REP_WHOAMI reply.
  *
  * Implemented replies:
  * * * * * * * * * * * *
  * * SPI_REP_RECV	Data from wireless nework. SPI[1:$] = data
  * @flag  F_NETWORK	Data came from IQMesh network if 1, P2P mode used otherwise.
- * @flag  F_COMPLETE	This was the last part of the packet
+ * @flag  F_COMPLETE	This was the last part of the packet. See SPI_CMD_MORE
  * @param SPI[1]	Address
  * @param SPI[2:$]	Data
+ * Comment:		After reception packet _without_ F_COMPLETE flag set,
+ * 			Master is supposed to send SPI_CMD_MORE command within 100 ms,
+ * 			otherwise data are lost.
  *
  * * SPI_REP_ERR	Something went wrong.
  * @param SPI[1]	Error number
+ * * SPI_REP_OK		Everything is OK
+ * @param SPI[1:$]	whatever
  *
  * Error codes:
  * ERR_STATE		Required operation is not supported in this state
@@ -84,15 +136,33 @@
 /* Send data to network. SPI[1:$] = data to send. Only on STATE_WORK */
 #define SPI_CMD_SEND	0x20
 
-/* some flags */
+#define SPI_CMD_MORE	0x30
+
+/* who are you? */
+#define SPI_CMD_WRU	0x40
+
+/* use with SPI_CMD_SEND */
 #define F_NETWORK	0x01
 #define F_COMPLETE	0x02
 
+/* use with SPI_CMD_MORE */
+#define F_YES		0x01
+#define F_NO		0x02
+
 /* Some error occured. SPI[1] = error number */
 #define SPI_REP_ERR	0x10
+/* Some data received */
 #define SPI_REP_RECV	0x20
+#define SPI_REP_OK	0x30
+/* I'll tell you who I am */
+#define SPI_REP_WHOAMI	0x40
 
 #define ERR_STATE	0x01
 #define ERR_UNKNOWN_CMD	0x02
+
+
+
+
+
 
 #endif
