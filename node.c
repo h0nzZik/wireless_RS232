@@ -1,4 +1,5 @@
-/* Node
+/*
+ * Node
  *
  */
 
@@ -8,20 +9,10 @@
 
 #include "header.h"
 
+#if 0
 #pragma packedCdataStrings 0
 #pragma cdata[__EEAPPINFO] = "We Love IQRF!*******++++++++++xx"
-
-
-
-/* Some EEPROM - related defines */
-#define MAGIC	0x5A
-
-/* EEPROM memory. 0xA0 is first byte available for coordinator */
-#define E2_MAGIC	0xA0
-#define E2_BONDED	0xA1
-
-#define MAX_SPI_PACKET_DATA	39
-
+#endif
 
 
 #define isupper(x) (((x) >= 'A') && ((x) <= 'Z'))
@@ -32,34 +23,12 @@ void send_dummy();
 
 void APPLICATION()
 {
-	uns8 i;
+	/* node */
+	dev.coord = 0;
+	common_init();
 
-
-	_LEDG = 0;
-	_LEDR = 0;
-	/* watchdog expired - some error */
-	if (TO == 0) {
-		_LEDR = 1;
-		_LEDG = 1;
-		while(1)
-			clrwdt();		
-
-	}
-
-	setNodeMode();
-	enableSPI();
-	dev.state = STATE_INIT;
-	i=0;
-	removeBond();
 	while(1) {
 		clrwdt();
-
-		/* change status */
-		if (dev.chstat) {
-			dev.state = dev.chstat;
-			dev.chstat = 0;
-		}
-
 
 		/* reset it all */
 		if (buttonPressed) {
@@ -70,23 +39,26 @@ void APPLICATION()
 			continue;
 		}
 
-		check_spi();
-		if (dev.chstat)
-			continue;
-
 
 		switch(dev.state){
 			case STATE_NOOP:
+				pulseLEDR();
+				waitDelay(30);
+				pulseLEDG();
+				waitDelay(60);
 				break;
 			case STATE_INIT:
+//				dev.bonded = 0;
 				dev.chstat = STATE_BOND;
 				removeBond();
 				_LEDG=1;
 				break;
 			case STATE_BOND:
 				if (bondRequest()) {
+//					dev.bonded = 1;
 					dev.chstat = STATE_WORK;
 					_LEDG = 0;
+					_LEDR = 0;
 				}
 				break;
 			case STATE_WORK:
@@ -105,10 +77,13 @@ void APPLICATION()
 			default:
 				dev.chstat = STATE_INIT;
 		}
+
+		check_spi();
+		change_state();
 		clrwdt();
 	}
 }
-
+#if 0
 uns8 reply_counter;
 void send_dummy(void)
 {
@@ -147,7 +122,7 @@ void send_dummy(void)
 	clrwdt();
 
 }
-
+#endif
 
 /* common functions */
 #include "common.c"
