@@ -183,14 +183,6 @@ inline void eeprom_save(void);
  * Comment:	If F_COMPLETE flag is not set, device will send next fragment
  * in next SPI_REP_RECV reply.
  *
- * * SPI_REP_ERR	Something went wrong.
- * @param SPI[1]	Error number
- * @param SPI[2:$]	Additional information
- * Error number can be one of the following:
- * ERR_STATE		
- * ERR_PACKET_LOST	Packet has been probably lost
- * @param SPI[2]	LOST_NO_ACK or LOST_NACK or LOST_SAME
- * 
  * * SPI_REP_OK		Everything is OK
  * @param SPI[1:$]	whatever
  *
@@ -199,7 +191,12 @@ inline void eeprom_save(void);
  * @param SPI[2]	network address
  * @param SPI[3]	internal state
  * @param SPI[4]	current packet ID
+ *
  * 
+ * * SPI_REP_ERR	Error reply
+ * @param SPI[1]	Error number
+ * @param SPI[2:$]	Additional information 
+ *  
  * Error codes:
  * ERR_STATE		Required operation is not supported in this state
  * 
@@ -208,6 +205,8 @@ inline void eeprom_save(void);
  * 
  * ERR_PACKET_LOST	Reply to the SPI_CMD_SEND command. Data are probably lost.
  * @param SPI[2]	Reason. Can be one of LOST_NO_ACK or LOST_NACK or LOST_SAME.
+ * 
+ * ERR_CANNOT_SEND	Reply to the SPI_CMD_SEND command. It is not possible to send the data.
  */
 
 /**
@@ -215,7 +214,6 @@ inline void eeprom_save(void);
  */
 #define SPI_CMD_CHSTAT	0x10
 #define SPI_CMD_SEND	0x20
-//#define SPI_CMD_MORE	0x30
 #define SPI_CMD_WRU	0x40
 
 
@@ -243,6 +241,8 @@ inline void eeprom_save(void);
 #define ERR_STATE	0x01
 #define ERR_UNKNOWN_CMD	0x02
 #define ERR_PACKET_LOST	0x04
+#define	ERR_CANNOT_SEND	0x08
+
 
 
 
@@ -264,6 +264,8 @@ inline void eeprom_save(void);
 #define	LOST_NACK	0x02
 #define LOST_SAME	0x04
 
+/* use with ERR_CANNOT_SEND */
+#define DATA_TOO_BIG	0x01
 
 /**
  * EEPROM

@@ -321,7 +321,6 @@ uns8 check_spi()
 	if (_SPIRX == 0)
 		return 0;
 
-
 	/* invalid CRC */
 	if (_SPICRCok == 0) {
 		startSPI(0);
@@ -407,11 +406,11 @@ uns8 check_spi()
 					reply_len = 2;
 					goto sw_end;
 				}
-				/* FIXME: */
-				if (SPIpacketLength > 30) {
+				/* We can't send such a big date */
+				if (DLEN + SPIpacketLength - 2 > RF_MAX_PACKET_SIZE) {
 					bufferCOM[0] = SPI_REP_ERR;
-					bufferCOM[1] = 'Y';	/* FIXME: */
-					bufferCOM[2] = 'X';
+					bufferCOM[1] = ERR_CANNOT_SEND;
+					bufferCOM[2] = DATA_TOO_BIG;
 					reply_len = 3;
 					/* some error */
 					goto sw_end;
